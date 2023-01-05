@@ -3,3 +3,6 @@ scripts:
         cmd: tests.ts
         watch: true
         unstable: true
+    phi:
+        cmd: failure-detector.ts
+        watch: true

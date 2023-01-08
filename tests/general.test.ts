@@ -1,7 +1,4 @@
-import {
-  describe, it, beforeEach,
-  assertEquals,
-} from './deps.ts'
+import { describe, it, beforeEach, assertEquals } from './deps.ts'
 import { random } from './utils.ts'
 
 describe('random', () => {

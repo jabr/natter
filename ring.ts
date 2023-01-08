@@ -13,10 +13,11 @@ export default class Ring<T> {
     const before = this.current
     const added = { i: item, n: before, p: before.p }
     before.p = added.p.n = added
-    return before
+    return added
   }
 
   remove(entry: Entry<T>) {
+    if (this.current === entry) this.current = entry.n
     entry.p.n = entry.n
     entry.n.p = entry.p
     delete entry.i

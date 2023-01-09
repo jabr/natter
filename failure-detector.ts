@@ -1,3 +1,5 @@
+export const PHI_FAILURE_THRESHOLD = 8.0
+
 export default class FailureDetector {
   private last : number
   private mean : number

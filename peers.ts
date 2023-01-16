@@ -1,4 +1,5 @@
-import { PeerNode, Address } from './node.ts'
+import { Optional, Address } from './common.ts'
+import { Node, PeerNode, Digest } from './node.ts'
 import Ring, { Entry } from './ring.ts'
 
 type Peer = [ PeerNode, Entry<PeerNode> ]
@@ -6,7 +7,10 @@ export default class Peers {
   private list : { [index: string] : Peer } = {}
   private ring : Ring<PeerNode> = new Ring
 
-  get(identifier: string) : PeerNode|undefined {
+  get count() { return Object.keys(this.list).length }
+  next() : Optional<PeerNode> { return this.ring.next() }
+
+  get(identifier: string) : Optional<PeerNode> {
     return this.list[identifier]?.[0]
   }
 
@@ -16,10 +20,15 @@ export default class Peers {
     return node
   }
 
-  digest() {
-    return Object.values(this.list)
-      .filter(([node, _]) => node.active)
-      .map(([node, _]) => [ node.identifier, node.sequence ])
+  partition() : { active: PeerNode[], inactive: PeerNode[] } {
+    return Object.values(this.list).reduce((parts, [node, _]) => {
+      parts[node.active ? 'active' : 'inactive'].push(node)
+      return parts
+    }, { active: [] as PeerNode[], inactive: [] as PeerNode[] })
+  }
+
+  digest() : Digest[] {
+    return this.partition().active.map(node => node.digest)
   }
 
   prune() {

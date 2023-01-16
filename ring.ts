@@ -1,4 +1,4 @@
-type Optional<T> = T | undefined
+import { Optional } from './common.ts'
 export type Entry<T> = { i: Optional<T>, n: Entry<T>, p: Entry<T> }
 
 export default class Ring<T> {

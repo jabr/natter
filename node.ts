@@ -4,6 +4,7 @@ import FailureDetector, { PHI_FAILURE_THRESHOLD } from './failure-detector.ts'
 type Sequence = number
 type SequencedValue = [ Value, Sequence ]
 export type Digest [ string, Sequence ]
+export type Diff [ string, SequencedValue ]
 
 const DISCARD_GRACE_PERIOD = 24 * 60 * 60 // discard after inactive for one day
 
@@ -18,7 +19,7 @@ export abstract class Node {
     return this.values[key]?.[0]
   }
 
-  public diff(from: Sequence) : [ string, SequencedValue ][] {
+  public diff(from: Sequence) : Diff[] {
     return Object.entries(this.values).filter(
       ([ _key, [ _value, sequence ] ]) => sequence > from
     )
@@ -35,11 +36,9 @@ export class PeerNode extends Node {
     return this.values[key]?.[1] ?? 0
   }
 
-  public apply(
-    sequence: Sequence,
-    updates: [string, SequencedValue][]
-  ) : void {
-    if (sequence <= this.sequence) return // is update older than our current data?
+  public apply(sequence: Sequence, updates: Diff[]) : void {
+    // is update older than our current data?
+    if (sequence <= this.sequence) return
 
     if (this.detector) {
       // if detector exists, update the detector

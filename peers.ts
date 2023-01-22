@@ -1,10 +1,12 @@
-import { Optional, Address } from './common.ts'
-import { Node, PeerNode, Digest } from './node.ts'
+import { Optional, Address, randomInteger, shuffle } from './common.ts'
+import { PeerNode, Digest } from './node.ts'
 import Ring, { Entry } from './ring.ts'
 
 type Peer = [ PeerNode, Entry<PeerNode> ]
 export default class Peers {
   private list : { [index: string] : Peer } = {}
+  private active : PeerNode[] = []
+  private inactive : PeerNode[] = []
   private ring : Ring<PeerNode> = new Ring
 
   get count() { return Object.keys(this.list).length }
@@ -17,27 +19,34 @@ export default class Peers {
   add(identifier: string, address: Address) : PeerNode {
     const node = new PeerNode(identifier, address)
     this.list[identifier] = [ node, this.ring.add(node) ]
+    this.active.push(node)
     return node
   }
 
-  partition() : { active: PeerNode[], inactive: PeerNode[] } {
-    return Object.values(this.list).reduce((parts, [node, _]) => {
-      parts[node.active ? 'active' : 'inactive'].push(node)
-      return parts
-    }, { active: [] as PeerNode[], inactive: [] as PeerNode[] })
-  }
-
   digest() : Digest[] {
-    return this.partition().active.map(node => node.digest)
+    return this.active.map(node => node.digest)
   }
 
   prune() {
+    this.active = this.inactive = []
     for (const peer of Object.values(this.list)) {
       const [ node, ringEntry ] = peer
       if (node.discardable()) {
         this.ring.remove(ringEntry)
         delete this.list[node.identifier]
+      } else {
+        if (node.active) this.active.push(node)
+        else this.inactive.push(node)
       }
     }
+    shuffle(this.active)
+  }
+
+  randomActives(count: number) : PeerNode[] {
+    return this.active.slice(0, Math.max(0, count))
+  }
+
+  randomInactive() : Optional<PeerNode> {
+    return this.inactive[randomInteger(this.inactive.length)]
   }
 }

@@ -1,20 +1,23 @@
-import { Optional, Address } from './common.ts'
+import { Optional, Address, randomlyOccurs, randomInteger } from './common.ts'
 import Peers from './peers.ts'
 import { Node, SelfNode, Digest, Diff } from './node.ts'
 
 type NodeDiff = [Digest, Diff[], Address?]
 
+const HEARTBEAT_INTERVAL = 1000 // milliseconds
+const SYNC_WITH_ROOT_FREQUENCY = 0.2
+const SYNC_WITH_INACTIVE_FREQUENCY = 0.1
+const SYNC_WITH_COUNT = 4
+
 export default class Cluster {
   public node : SelfNode
-  public roots : Set<Address>
   public peers : Peers = new Peers
 
-  constructor(id: string, address: Address, roots: Address[] = []) {
+  constructor(id: string, address: Address, public roots: Address[] = []) {
     const timestamp = Date.now().toString(36)
     const nonce = crypto.getRandomValues(new Uint16Array(1))[0].toString(16)
     const identifier = `${id}/${timestamp}:${nonce}`
     this.node = new SelfNode(identifier, address)
-    this.roots = new Set<Address>(roots)
   }
 
   private digest() {
@@ -69,20 +72,34 @@ export default class Cluster {
     return diffs
   }
 
+  private randomRoot() : Optional<Address> {
+    return this.roots[randomInteger(this.roots.length)]
+  }
+
   private targets() : Set<Address> {
     // if we have no peers yet, target the roots
-    if (this.peers.count === 0) return this.roots
+    if (this.peers.count === 0) return new Set(this.roots)
 
     const sample = new Set<Address>
     // add the next node on peer ring
     let node = this.peers.next()
     if (node) sample.add(node.address)
-    // @todo
-    // - sometimes, add a root
-    const nodes = this.peers.partition()
-    // - sometimes, add an inactive
-    // - add random actives to fill
-    node = nodes.active[0]
+
+    // sometimes, add a root
+    if (randomlyOccurs(SYNC_WITH_ROOT_FREQUENCY)) {
+      const address = this.randomRoot()
+      if (address) sample.add(address)
+    }
+
+    // sometimes, add an inactive
+    if (randomlyOccurs(SYNC_WITH_INACTIVE_FREQUENCY)) {
+      const node = this.peers.randomInactive()
+      if (node) sample.add(node.address)
+    }
+
+    // add random actives to fill
+    const actives = this.peers.randomActives(SYNC_WITH_COUNT - sample.size)
+    for (const node of actives) sample.add(node.address)
 
     return sample
   }

@@ -3,8 +3,8 @@ import FailureDetector, { PHI_FAILURE_THRESHOLD } from './failure-detector.ts'
 
 type Sequence = number
 type SequencedValue = [ Value, Sequence ]
-export type Digest [ string, Sequence ]
-export type Diff [ string, SequencedValue ]
+export type Digest = [ string, Sequence ]
+export type Diff = [ string, SequencedValue ]
 
 const DISCARD_GRACE_PERIOD = 24 * 60 * 60 // discard after inactive for one day
 

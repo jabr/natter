@@ -42,6 +42,10 @@ export default class Peers {
     shuffle(this.active)
   }
 
+  activeSet() : Set<PeerNode> {
+    return new Set(this.active)
+  }
+
   randomActives(count: number) : PeerNode[] {
     return this.active.slice(0, Math.max(0, count))
   }

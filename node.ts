@@ -26,7 +26,6 @@ export abstract class Node {
   }
 
   public discardable() : boolean { return false }
-  // get self() : boolean { return false }
 }
 
 export class PeerNode extends Node {
@@ -77,8 +76,6 @@ export class PeerNode extends Node {
 }
 
 export class SelfNode extends Node {
-  // get self() : boolean { return true }
-
   public set(key: string, value: Value) : Value {
     this.values[key] = [ value, ++this.sequence ]
     return value

@@ -16,7 +16,8 @@ export default class Cluster {
 
   constructor(id: string, address: Address, public roots: Address[] = []) {
     const timestamp = Date.now().toString(36)
-    const nonce = crypto.getRandomValues(new Uint16Array(1))[0].toString(16)
+    const randomInt = crypto.getRandomValues(new Uint16Array(1))[0]
+    const nonce = randomInt.toString(16).padStart(4, '0')
     const identifier = `${id}/${timestamp}:${nonce}`
     this.node = new SelfNode(identifier, address)
   }
@@ -56,21 +57,23 @@ export default class Cluster {
     actives.add(this.node)
     for (const [ identifier, sequence ] of digest) {
       const node = this.nodeFor(identifier)
-      if (node) {
-        actives.delete(node)
-        if (node.sequence < sequence) {
-          if (this.node === node) {
-            // we received a digest claiming to have a newer version of ourself. this should not happen.
-            console.error(`received digest for ourself with a higher sequence (${identifier} @ ${sequence} > ${node.sequence})`)
-            // @note: should we shutdown? something else?
-            continue
-          }
-          requests.push([identifier, node.sequence])
-        } else if (node.sequence > sequence) {
-          diffs.push([node.digest, node.diff(sequence)])
-        }
-      } else {
+      if (!node) {
+        // unknown node, so request all info on it.
         requests.push([identifier, 0])
+        continue
+      }
+
+      actives.delete(node)
+      if (node.sequence < sequence) { // peer's info is newer?
+        if (this.node === node) {
+          // we received a digest claiming to have a newer version of ourself. this should not happen.
+          console.error(`received digest for ourself with a higher sequence (${identifier} @ ${sequence} > ${node.sequence})`)
+          // @note: should we shutdown? something else?
+          continue
+        }
+        requests.push([identifier, node.sequence])
+      } else if (node.sequence > sequence) { // peer's info is older
+        diffs.push([node.digest, node.diff(sequence)])
       }
     }
 

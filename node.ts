@@ -1,21 +1,21 @@
-import { Optional, Address, Value } from './common.ts'
+import { Optional, Address, Identifier, Key, Value } from './common.ts'
 import FailureDetector, { PHI_FAILURE_THRESHOLD } from './failure-detector.ts'
 
 type Sequence = number
 type SequencedValue = [ Value, Sequence ]
-export type Digest = [ string, Sequence ]
-export type Diff = [ string, SequencedValue ]
+export type Digest = [ Identifier, Sequence ]
+export type Diff = [ Key, SequencedValue ]
 
 const DISCARD_GRACE_PERIOD = 24 * 60 * 60 // discard after inactive for one day
 
 export abstract class Node {
   public sequence : Sequence = 0
-  public values : { [index: string] : SequencedValue } = {}
+  public values : { [index: Key] : SequencedValue } = {}
 
-  constructor(public identifier: string, public address: Address) {}
+  constructor(public identifier: Identifier, public address: Address) {}
   get digest() : Digest { return [ this.identifier, this.sequence ] }
 
-  public get(key: string) : Optional<Value> {
+  public get(key: Key) : Optional<Value> {
     return this.values[key]?.[0]
   }
 
@@ -32,7 +32,7 @@ export class PeerNode extends Node {
   public detector? : FailureDetector
   public inactiveSince = Infinity
 
-  private currentSequenceFor(key: string) : Sequence {
+  private currentSequenceFor(key: Key) : Sequence {
     return this.values[key]?.[1] ?? 0
   }
 
@@ -76,12 +76,7 @@ export class PeerNode extends Node {
 }
 
 export class SelfNode extends Node {
-  public set(key: string, value: Value) : Value {
+  public set(key: Key, value: Value) : void {
     this.values[key] = [ value, ++this.sequence ]
-    return value
-  }
-
-  public heartbeat() : void {
-    this.set('heartbeat', Date.now())
   }
 }

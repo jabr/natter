@@ -1,10 +1,10 @@
-import { Optional, Address, randomInteger, shuffle } from './common.ts'
-import { PeerNode, Digest } from './node.ts'
+import { Optional, Address, Identifier, randomInteger, shuffle } from './common.ts'
+import { Node, PeerNode, Digest } from './node.ts'
 import Ring, { Entry } from './ring.ts'
 
 type Peer = [ PeerNode, Entry<PeerNode> ]
 export default class Peers {
-  private list : { [index: string] : Peer } = {}
+  private list : { [index: Identifier] : Peer } = {}
   private active : PeerNode[] = []
   private inactive : PeerNode[] = []
   private ring : Ring<PeerNode> = new Ring
@@ -12,11 +12,11 @@ export default class Peers {
   get count() { return Object.keys(this.list).length }
   next() : Optional<PeerNode> { return this.ring.next() }
 
-  get(identifier: string) : Optional<PeerNode> {
+  get(identifier: Identifier) : Optional<PeerNode> {
     return this.list[identifier]?.[0]
   }
 
-  add(identifier: string, address: Address) : PeerNode {
+  add(identifier: Identifier, address: Address) : PeerNode {
     const node = new PeerNode(identifier, address)
     this.list[identifier] = [ node, this.ring.add(node) ]
     this.active.push(node)
@@ -42,7 +42,7 @@ export default class Peers {
     shuffle(this.active)
   }
 
-  activeSet() : Set<PeerNode> {
+  actives() : Set<Node> {
     return new Set(this.active)
   }
 

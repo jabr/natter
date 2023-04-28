@@ -10,7 +10,7 @@ const DISCARD_GRACE_PERIOD = 24 * 60 * 60 // discard after inactive for one day
 
 export abstract class Node {
   public sequence : Sequence = 0
-  public values : { [index: Key] : SequencedValue } = {}
+  protected values : { [index: Key] : SequencedValue } = {}
 
   constructor(public identifier: Identifier, public address: Address) {}
   get digest() : Digest { return [ this.identifier, this.sequence ] }
@@ -29,8 +29,8 @@ export abstract class Node {
 }
 
 export class PeerNode extends Node {
-  public detector? : FailureDetector
-  public inactiveSince = Infinity
+  private detector? : FailureDetector
+  private inactiveSince = Infinity
 
   private currentSequenceFor(key: Key) : Sequence {
     return this.values[key]?.[1] ?? 0

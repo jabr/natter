@@ -6,7 +6,7 @@ type SequencedValue = [ Value, Sequence ]
 export type Digest = [ Identifier, Sequence ]
 export type Diff = [ Key, SequencedValue ]
 
-const DISCARD_GRACE_PERIOD = 24 * 60 * 60 // discard after inactive for one day
+const DISCARD_GRACE_PERIOD = 24 * 60 * 60 * 1000 // discard after inactive for one day
 
 export abstract class Node {
   public sequence : Sequence = 0

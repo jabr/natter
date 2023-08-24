@@ -1,9 +1,9 @@
 export const PHI_FAILURE_THRESHOLD = 8.0
 
 export default class FailureDetector {
-  private last : number
-  private mean : number
-  private squaredInterval : number
+  private last: number
+  private mean: number
+  private squaredInterval: number
 
   constructor(private weight: number = 0.9, interval: number = 1000) {
     this.last = Date.now()

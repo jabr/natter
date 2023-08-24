@@ -14,18 +14,18 @@ const SYNC_WITH_INACTIVE_FREQUENCY = 0.1
 const SYNC_WITH_COUNT = 4
 
 enum MessageType { SYN, ACK }
-type Message = [ MessageType, Digest[], NodeDiff[] ]
+type Message = [MessageType, Digest[], NodeDiff[]]
 interface Transport {
-  send(to: Address, data: Message) : void
-  recv() : AsyncGenerator<[Address, Message]>
-  local() : Address
-  roots() : Address[]
+  send(to: Address, data: Message): void
+  recv(): AsyncGenerator<[Address, Message]>
+  local(): Address
+  roots(): Address[]
 }
 
 export default class Cluster {
-  public node : SelfNode // @todo: make private
-  public peers : Peers = new Peers // @todo: make private
-  private interval : Optional<number>
+  public node: SelfNode // @todo: make private
+  public peers: Peers = new Peers // @todo: make private
+  private interval: Optional<number>
 
   constructor(private transport: Transport, id: string) {
     const timestamp = Date.now().toString(36)
@@ -58,43 +58,43 @@ export default class Cluster {
   }
 
   private sync() {
-    const message: Message = [ MessageType.SYN, this.digest(), [] ]
+    const message: Message = [MessageType.SYN, this.digest(), []]
     for (const target of this.targets()) this.transport.send(target, message)
   }
 
-  private process(from: Address, [ type, digests, diffs]: Message): void {
-    let requests : Digest[] = []
-    let responses : NodeDiff[] = []
+  private process(from: Address, [type, digests, diffs]: Message): void {
+    let requests: Digest[] = []
+    let responses: NodeDiff[] = []
 
     if (type === MessageType.SYN) {
-        [ requests, responses ] = this.processDigest(digests)
+      [requests, responses] = this.processDigest(digests)
     } else if (type === MessageType.ACK) {
-        this.processDiffs(diffs)
-        responses = this.processRequests(digests)
+      this.processDiffs(diffs)
+      responses = this.processRequests(digests)
     } else {
-        console.error(`unknown message type: ${type}`)
+      console.error(`unknown message type: ${type}`)
     }
 
     if (requests.length > 0 || responses.length > 0) {
-      this.transport.send(from, [ MessageType.ACK, requests, responses ])
+      this.transport.send(from, [MessageType.ACK, requests, responses])
     }
   }
 
   private digest() {
-    return [ this.node.digest, ...this.peers.digest() ]
+    return [this.node.digest, ...this.peers.digest()]
   }
 
-  private nodeFor(identifier: Identifier) : Optional<Node> {
+  private nodeFor(identifier: Identifier): Optional<Node> {
     if (identifier === this.node.identifier) return this.node
     return this.peers.get(identifier)
   }
 
-  private processDigest(digest: Digest[]) : [ Digest[], NodeDiff[] ] {
+  private processDigest(digest: Digest[]): [Digest[], NodeDiff[]] {
     const requests: Digest[] = []
     const diffs: NodeDiff[] = []
     const actives = this.peers.actives()
     actives.add(this.node)
-    for (const [ identifier, sequence ] of digest) {
+    for (const [identifier, sequence] of digest) {
       const node = this.nodeFor(identifier)
       if (!node) {
         // unknown node, so request all info on it.
@@ -121,11 +121,11 @@ export default class Cluster {
       diffs.push([node.digest, node.diff(0), node.address])
     }
 
-    return [ requests, diffs ]
+    return [requests, diffs]
   }
 
   private processDiffs(diffs: NodeDiff[]) {
-    for (const [ [identifier, sequence], updates, address ] of diffs) {
+    for (const [[identifier, sequence], updates, address] of diffs) {
       let node = this.nodeFor(identifier)
       if (this.node === node) {
         // we received an update for ourself. this should not happen.
@@ -139,7 +139,7 @@ export default class Cluster {
     }
   }
 
-  private processRequests(requests: Digest[]) : NodeDiff[] {
+  private processRequests(requests: Digest[]): NodeDiff[] {
     const diffs: NodeDiff[] = []
     for (const [identifier, sequence] of requests) {
       const node = this.nodeFor(identifier)
@@ -152,12 +152,12 @@ export default class Cluster {
     return diffs
   }
 
-  private randomRoot() : Optional<Address> {
+  private randomRoot(): Optional<Address> {
     const roots = this.transport.roots()
     return roots[randomInteger(roots.length)]
   }
 
-  private targets() : Set<Address> {
+  private targets(): Set<Address> {
     // if we have no peers yet, target the roots
     if (this.peers.count === 0) return new Set(this.transport.roots())
 

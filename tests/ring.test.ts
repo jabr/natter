@@ -1,10 +1,10 @@
 import { describe, it, beforeEach, assertStrictEquals } from './deps.ts'
 
 import Ring, { Entry } from '../ring.ts'
-class Thing { constructor(public name: string) {} }
+class Thing { constructor(public name: string) { } }
 
 describe('Ring', () => {
-  let ring : Ring<Thing>
+  let ring: Ring<Thing>
 
   beforeEach(() => {
     ring = new Ring()
@@ -18,8 +18,8 @@ describe('Ring', () => {
   })
 
   describe('with one entry', () => {
-    let thing : Thing
-    let entry : Entry<Thing>
+    let thing: Thing
+    let entry: Entry<Thing>
 
     beforeEach(() => {
       thing = new Thing('aaa')

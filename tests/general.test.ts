@@ -3,7 +3,7 @@ import { random } from './utils.ts'
 
 describe('random', () => {
   describe('gaussian', () => {
-    let value : number
+    let value: number
 
     beforeEach(() => {
       value = random.gaussian()

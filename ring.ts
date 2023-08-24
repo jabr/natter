@@ -3,13 +3,13 @@ export type Entry<T> = { i: Optional<T>, n: Entry<T>, p: Entry<T> }
 
 export default class Ring<T> {
   private root = {} as Entry<T>
-  private current : Entry<T>
+  private current: Entry<T>
 
   constructor() {
     this.current = this.root.n = this.root.p = this.root
   }
 
-  add(item : T) : Entry<T> {
+  add(item: T): Entry<T> {
     const before = this.current
     const added = { i: item, n: before, p: before.p }
     before.p = added.p.n = added
@@ -23,7 +23,7 @@ export default class Ring<T> {
     delete entry.i
   }
 
-  next() : Optional<T> {
+  next(): Optional<T> {
     this.current = this.current.n
     // when on the root entry, try skipping over it
     if (this.current === this.root) this.current = this.current.n

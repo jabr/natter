@@ -6,8 +6,8 @@ import {
 import FailureDetector from '../failure-detector.ts'
 
 describe('failure-detector', () => {
-  let time : FakeTime
-  let detector : FailureDetector
+  let time: FakeTime
+  let detector: FailureDetector
 
   beforeEach(() => {
     time = new FakeTime()

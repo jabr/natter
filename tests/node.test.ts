@@ -1,6 +1,5 @@
 import {
-  describe, it, beforeEach, afterEach, FakeTime,
-  assert, assertInstanceOf, assertEquals, assertStrictEquals
+  describe, it, beforeEach, afterEach, expect, assert, FakeTime,
 } from './deps.ts'
 
 import { Node, PeerNode, SelfNode } from '../node.ts'
@@ -14,27 +13,27 @@ describe('Node', () => {
   })
 
   it('.identifier is set by constructor', () => {
-    assertEquals(node.identifier, 'a')
+    expect(node.identifier).toBe('a')
   })
 
   it('.address is set by constructor', () => {
-    assertEquals(node.address, 'a.local')
+    expect(node.address).toBe('a.local')
   })
 
   it('.sequence is a number', () => {
-    assertEquals(typeof node.sequence, 'number')
+    expect(typeof node.sequence).toBe('number')
   })
 
   it('#get returns undefined for nonexistent keys', () => {
-    assertStrictEquals(node.get('none'), undefined)
+    expect(node.get('none')).toBeUndefined()
   })
 
   it('#diff returns an array', () => {
-    assertInstanceOf(node.diff(0), Array)
+    expect(node.diff(0)).toBeInstanceOf(Array)
   })
 
   it('#discardable returns a boolean', () => {
-    assertEquals(typeof node.discardable(), 'boolean')
+    expect(typeof node.discardable()).toBe('boolean')
   })
 })
 
@@ -57,21 +56,21 @@ describe('PeerNode', () => {
   })
 
   it('is a subclass of Node', () => {
-    assert(node instanceof Node, 'not an instance of Node')
+    assert(node instanceof Node, 'Expected object to be instance of Node')
   })
 
   describe('#get', () => {
     it('returns the current value for a key', () => {
-      assertEquals(node.get('aaa'), 'x')
-      assertEquals(node.get('bbb'), 'y')
-      assertEquals(node.get('ccc'), 'z')
+      expect(node.get('aaa')).toBe('x')
+      expect(node.get('bbb')).toBe('y')
+      expect(node.get('ccc')).toBe('z')
     })
   })
 
   describe('#diff', () => {
     describe('when the sequence is 0', () => {
       it('returns all of the entries', () => {
-        assertEquals(node.diff(0), [
+        expect(node.diff(0)).toEqual([
           ["aaa", ["x", 1]],
           ['bbb', ['y', 3]],
           ['ccc', ['z', 5]],
@@ -81,13 +80,13 @@ describe('PeerNode', () => {
 
     describe('when the sequence is in the middle of entries', () => {
       it('returns an newer entries', () => {
-        assertEquals(node.diff(3), [['ccc', ['z', 5]]]);
+        expect(node.diff(3)).toEqual([['ccc', ['z', 5]]]);
       })
     })
 
     describe('when the sequence is greater than all entries', () => {
       it('returns an empty array', () => {
-        assertEquals(node.diff(Infinity), [])
+        expect(node.diff(Infinity)).toEqual([])
       })
     })
   })
@@ -96,7 +95,8 @@ describe('PeerNode', () => {
     describe("when the sequence is not greater than the node's", () => {
       it('does not change the node', () => {
         node.apply(2, [['aaa', ['xyz', 2]]])
-        assertEquals(node.get('aaa'), 'x')
+        expect(node.sequence).toBe(5)
+        expect(node.get('aaa')).toBe('x')
       })
     })
 
@@ -109,25 +109,54 @@ describe('PeerNode', () => {
       })
 
       it("updates the node's current sequence", () => {
-        assertEquals(node.sequence, 8)
+        expect(node.sequence).toBe(8)
       })
 
       it('updates keys with changes we have not seen yet', () => {
-        assertEquals(node.get('ccc'), 'HHH')
+        expect(node.get('ccc')).toBe('HHH')
       })
 
       it('does not update keys with out-of-date changes', () => {
-        assertEquals(node.get('bbb'), 'y')
+        expect(node.get('bbb')).toBe('y')
       })
     })
 
-    describe('with no detector') // @todo
-    describe('with a dector') // @todo
+    describe('with no detector', () => {
+      beforeEach(() => {
+        node.inactive()
+        expect(node.phi).toBe(NaN)
+      })
+
+      it('creates a new detector', () => {
+        node.apply(8, [])
+        time.tick(500)
+        expect(node.phi).toBeCloseTo(0.500, 3)
+      })
+    })
+
+    describe('with a detector', () => {
+      beforeEach(() => {
+        expect(node.phi).not.toBe(NaN)
+        expect(node.phi).toBe(0)
+        time.tick(10_000)
+      })
+
+      it('updates the existing detector', () => {
+        node.apply(8, [])
+        time.tick(500)
+        expect(node.phi).toBeCloseTo(0.068, 3)
+      })
+    })
   })
 
   describe('when new', () => {
     it('.active is true', () => {
-      assertStrictEquals(node.active, true)
+      expect(node.active).toBe(true)
+    })
+
+    it('#discardable stays false indefinitely', () => {
+      time.tick(100_000_000)
+      expect(node.discardable()).toBe(false)
     })
   })
 
@@ -144,11 +173,11 @@ describe('PeerNode', () => {
       })
 
       it('returns false', () => {
-        assertStrictEquals(discardable, false)
+        expect(discardable).toBe(false)
       })
 
       it('causes #active to become false', () => {
-        assertStrictEquals(node.active, false)
+        expect(node.active).toBe(false)
       })
     })
 
@@ -159,7 +188,7 @@ describe('PeerNode', () => {
       })
 
       it('#discardable returns true', () => {
-        assertStrictEquals(node.discardable(), true)
+        expect(node.discardable()).toBe(true)
       })
     })
 
@@ -176,16 +205,37 @@ describe('PeerNode', () => {
         })
 
         it('returns false', () => {
-          assertStrictEquals(discardable, false)
+          expect(discardable).toBe(false)
         })
 
         it('#active is still true', () => {
-          assertStrictEquals(node.active, true)
+          expect(node.active).toBe(true)
         })
       })
 
       it('#active is true', () => {
-        assertStrictEquals(node.active, true)
+        expect(node.active).toBe(true)
+      })
+    })
+  })
+
+  describe('#inactive', () => {
+    beforeEach(() => {
+      node.inactive()
+    })
+
+    it('.active is false', () => {
+      expect(node.active).toBe(false)
+    })
+
+    describe('#discardable', () => {
+      it('is false initially', () => {
+        expect(node.discardable()).toBe(false)
+      })
+
+      it('is true eventually', () => {
+        time.tick(100_000_000)
+        expect(node.discardable()).toBe(true)
       })
     })
   })
@@ -199,7 +249,7 @@ describe('SelfNode', () => {
   })
 
   it('is a subclass of Node', () => {
-    assert(node instanceof Node, 'not an instance of Node')
+    assert(node instanceof Node, 'Expected object to be instance of Node')
   })
 
   describe('#set', () => {
@@ -208,25 +258,28 @@ describe('SelfNode', () => {
     })
 
     it('increments the sequence', () => {
-      assertEquals(node.sequence, 1)
+      expect(node.sequence).toBe(1)
       node.set('name', 'bar')
-      assertEquals(node.sequence, 2)
+      expect(node.sequence).toBe(2)
     })
 
     it('stores the value', () => {
-      assertEquals(node.get('name'), 'foo')
+      expect(node.get('name')).toBe('foo')
     })
 
     it('changes the diff against an earlier sequence', () => {
-      assertEquals(node.diff(0), [['name', ['foo', 1]]])
+      expect(node.diff(0)).toEqual([['name', ['foo', 1]]])
+      node.set('name', 'bar')
+      expect(node.diff(0)).toEqual([['name', ['bar', 2]]])
     })
 
-    it('does not change the diff againt the current sequence', () => {
-      assertEquals(node.diff(Infinity), [])
+    it('does not change the diff againt the current sequence or later', () => {
+      expect(node.diff(1)).toEqual([])
+      expect(node.diff(9)).toEqual([])
     })
   })
 
   it('#discardable returns false', () => {
-    assertStrictEquals(node.discardable(), false)
+    expect(node.discardable()).toBe(false)
   })
 })

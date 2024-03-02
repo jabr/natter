@@ -58,6 +58,7 @@ export class PeerNode extends Node {
   }
 
   public get active(): boolean { return this.detector !== undefined }
+  public get phi(): number { return this.detector?.phi ?? NaN }
 
   public inactive() {
     this.inactiveSince = Date.now()

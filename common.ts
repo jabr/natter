@@ -15,6 +15,15 @@ export function randomInteger(under: number): number {
   return Math.floor(Math.random() * under)
 }
 
+// Generate a Guassian distributed random value using Box-Muller transform.
+export function randomGaussian(mean = 0, standardDeviation = 1) {
+  const u = 1 - Math.random() // converting [0,1) to (0,1]
+  const v = Math.random()
+  const z = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v)
+  return mean + (z * standardDeviation)
+}
+
+
 // Return a secure random uint16 [0,65535]
 export function secureRandomUint16(): number {
   return crypto.getRandomValues(new Uint16Array(1))[0]

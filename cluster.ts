@@ -134,8 +134,13 @@ export default class Cluster {
         continue
       }
 
-      if (!node && address) node = this.peers.add(identifier, address)
-      if (node) (node as PeerNode).apply(sequence, updates)
+      if (!node && address) {
+        this.peers.add(node = new PeerNode(identifier, address))
+      }
+
+      if (node) {
+        (node as PeerNode).apply(sequence, updates)
+      }
     }
   }
 

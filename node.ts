@@ -59,13 +59,17 @@ export class PeerNode extends Node {
 
   public get active(): boolean { return this.detector !== undefined }
 
+  public inactive() {
+    this.inactiveSince = Date.now()
+    this.detector = undefined
+  }
+
   public discardable(): boolean {
     if (this.detector) {
       if (this.detector.phi > PHI_FAILURE_THRESHOLD) {
         // failure detector confidence has passed the threshold,
         // so mark this node as inactive (and later discardable)
-        this.inactiveSince = Date.now()
-        this.detector = undefined
+        this.inactive()
       }
       return false
     }

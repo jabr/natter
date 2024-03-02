@@ -16,11 +16,10 @@ export default class Peers {
     return this.list[identifier]?.[0]
   }
 
-  add(identifier: Identifier, address: Address): PeerNode {
-    const node = new PeerNode(identifier, address)
-    this.list[identifier] = [node, this.ring.add(node)]
+  add(node: PeerNode) {
+    this.list[node.identifier] = [node, this.ring.add(node)]
     this.active.push(node)
-    return node
+    return this
   }
 
   digest(): Digest[] {
@@ -28,7 +27,8 @@ export default class Peers {
   }
 
   prune() {
-    this.active = this.inactive = []
+    this.active = []
+    this.inactive = []
     for (const peer of Object.values(this.list)) {
       const [node, ringEntry] = peer
       if (node.discardable()) {
@@ -40,6 +40,7 @@ export default class Peers {
       }
     }
     shuffle(this.active)
+    return this
   }
 
   actives(): Set<Node> {

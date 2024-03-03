@@ -23,7 +23,6 @@ export function randomGaussian(mean = 0, standardDeviation = 1) {
   return mean + (z * standardDeviation)
 }
 
-
 // Return a secure random uint16 [0,65535]
 export function secureRandomUint16(): number {
   return crypto.getRandomValues(new Uint16Array(1))[0]

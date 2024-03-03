@@ -4,6 +4,7 @@ import {
 } from './common.ts'
 import Peers from './peers.ts'
 import { Node, SelfNode, PeerNode, Digest, Diff } from './node.ts'
+import { Transport, Message, MessageType } from './transport.ts'
 
 type NodeDiff = [Digest, Diff[], Address?]
 
@@ -12,15 +13,6 @@ const HEARTBEAT_KEY = '\x01h' as Key
 const SYNC_WITH_ROOT_FREQUENCY = 0.2
 const SYNC_WITH_INACTIVE_FREQUENCY = 0.1
 const SYNC_WITH_COUNT = 4
-
-enum MessageType { SYN, ACK }
-type Message = [MessageType, Digest[], NodeDiff[]]
-interface Transport {
-  send(to: Address, data: Message): void
-  recv(): AsyncGenerator<[Address, Message]>
-  local(): Address
-  roots(): Address[]
-}
 
 export default class Cluster {
   public node: SelfNode // @todo: make private
@@ -47,7 +39,7 @@ export default class Cluster {
   }
 
   public stop() {
-    // @todo: stop receiving from transport
+    this.transport.stop()
     if (this.interval) clearInterval(this.interval)
     this.interval = undefined
   }

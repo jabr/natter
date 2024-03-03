@@ -32,6 +32,9 @@ export default class Ring<T> {
 
   drop() {
     // don't drop the root entry
-    if (this.current !== this.root) this.remove(this.current)
+    if (this.current !== this.root) {
+      this.remove(this.current)
+      this.current = this.current.p
+    }
   }
 }

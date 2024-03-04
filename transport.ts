@@ -1,5 +1,6 @@
 import { Digest, Diff } from './node.ts'
 import { Address } from './common.ts'
+export type { Address }
 
 type NodeDiff = [Digest, Diff[], Address?]
 export enum MessageType { SYN, ACK }
@@ -13,13 +14,18 @@ export interface Transport {
   stop(): void
 }
 
+export type TransportConfig = {
+  local: Address,
+  roots: Address[],
+}
+
 export abstract class ConfiguredTransport implements Transport {
-  constructor(private config: { local: Address, roots: Address[] }) {}
+  constructor(private config: TransportConfig) {}
   local() { return this.config.local }
   roots() { return this.config.roots }
 
   // Implemented by subclasses
   send(_to: Address, _data: Message) {}
-  async *recv() {}
+  async *recv(): AsyncGenerator<[Address, Message]> {}
   stop() {}
 }

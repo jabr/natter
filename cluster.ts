@@ -15,27 +15,38 @@ const SYNC_WITH_INACTIVE_FREQUENCY = 0.1
 const SYNC_WITH_COUNT = 4
 
 export default class Cluster {
-  public node: SelfNode // @todo: make private
-  public peers: Peers = new Peers // @todo: make private
+  public name: string
+  private node: SelfNode
+  private peers = new Peers
   private interval: Optional<number>
 
-  constructor(private transport: Transport, id: string) {
+  constructor(
+    private transport: Transport,
+    clusterName: string,
+    nodeName: string
+  ) {
     const timestamp = Date.now().toString(36)
     const nonce = secureRandomUint16().toString(16).padStart(4, '0')
-    const identifier = `${id}/${timestamp}:${nonce}`
+    this.name = `${clusterName}/${nodeName}`
+    const identifier = `${this.name}/${timestamp}:${nonce}`
     this.node = new SelfNode(identifier as Identifier, this.transport.local())
   }
 
-  public async start() {
-    for await (const [from, data] of this.transport.recv()) {
-      this.process(from, data)
-    }
+  get identifier() { return this.node.identifier }
+  get sequence() { return this.node.sequence }
+  get peerCount() { return this.peers.count }
 
-    this.define(HEARTBEAT_KEY, Date.now())
+  public async start() {
     this.interval = setInterval(() => {
       this.peers.prune()
       this.define(HEARTBEAT_KEY, Date.now())
     }, HEARTBEAT_INTERVAL)
+
+    this.define(HEARTBEAT_KEY, Date.now())
+
+    for await (const [from, data] of this.transport.recv()) {
+      this.process(from, data)
+    }
   }
 
   public stop() {

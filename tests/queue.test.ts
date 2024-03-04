@@ -28,7 +28,6 @@ describe('Queue', () => {
     })
 
     describe('#take', () => {
-
       it('returns the items one at a time', async () => {
         expect(await queue.take()).toBe(thingA)
         expect(await queue.take()).toBe(thingB)
@@ -44,6 +43,19 @@ describe('Queue', () => {
           if (queue.length <= 0) break
         }
       })
+    })
+  })
+
+  describe('when no items are queued', () => {
+    it('#take calls resolve in order when items are pushed', async () => {
+      const p1 = queue.take()
+      const r1 = p1.then(x => expect(x).toBe(thingB))
+      const p2 = queue.take()
+      const r2 = p2.then(x => expect(x).toBe(thingA))
+      queue.push(thingB)
+      queue.push(thingA)
+      await r1
+      await r2
     })
   })
 })

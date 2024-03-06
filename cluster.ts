@@ -16,8 +16,8 @@ const SYNC_WITH_COUNT = 4
 
 export default class Cluster {
   public name: string
-  private node: SelfNode
-  private peers = new Peers
+  public node: SelfNode // @todo: make private
+  public peers = new Peers // @todo: make private
   private interval: Optional<number>
 
   constructor(
@@ -28,7 +28,7 @@ export default class Cluster {
     const timestamp = Date.now().toString(36)
     const nonce = secureRandomUint16().toString(16).padStart(4, '0')
     this.name = `${clusterName}/${nodeName}`
-    const identifier = `${this.name}/${timestamp}:${nonce}`
+    const identifier = `${this.name}:${timestamp}-${nonce}`
     this.node = new SelfNode(identifier as Identifier, this.transport.local())
   }
 

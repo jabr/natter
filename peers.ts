@@ -4,7 +4,7 @@ import Ring, { Entry } from './ring.ts'
 
 type Peer = [PeerNode, Entry<PeerNode>]
 export default class Peers {
-  private list: { [index: Identifier]: Peer } = {}
+  public list: { [index: Identifier]: Peer } = {} // @todo: make private
   private active: PeerNode[] = []
   private inactive: PeerNode[] = []
   private ring: Ring<PeerNode> = new Ring

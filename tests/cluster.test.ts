@@ -4,12 +4,10 @@ import {
 
 import Cluster from '../cluster.ts'
 import {
-  TransportConfig, ConfiguredTransport,
+  TransportConfig, QueuedTransport,
   Address, Message, MessageType,
 } from '../transport.ts'
-import Queue from '../queue.ts'
 
-type AM = [Address, Message]
 type Packet = {
   state: string,
   at: number,
@@ -18,9 +16,8 @@ type Packet = {
   message: Message
 }
 
-class Transport extends ConfiguredTransport {
+class Transport extends QueuedTransport {
   public dropping = false
-  public messages = new Queue<AM>
 
   constructor(private network: Network, config: TransportConfig) {
     super(config)
@@ -34,6 +31,7 @@ class Transport extends ConfiguredTransport {
       to,
       message: data,
     }
+    console.log(record)
     this.network.packets.push(record)
 
     if (this.dropping) {
@@ -48,16 +46,15 @@ class Transport extends ConfiguredTransport {
         return
       }
 
-      transport.messages.push([record.from, record.message])
+      transport.push([record.from, record.message])
       record.state = 'sent'
     }
   }
 
-  recv(): AsyncGenerator<[Address, Message]> {
-    return this.messages[Symbol.asyncIterator]()
+  stop() {
+    super.stop()
+    this.network.transports.delete(this.local())
   }
-
-  stop() { this.network.transports.delete(this.local()) }
 }
 
 class Network {
